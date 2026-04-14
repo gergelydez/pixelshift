@@ -2,8 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>PixelShift — Image Converter</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Theme & Status Bar -->
+  <meta name="theme-color" content="#c8f542" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PixelShift" />
+
+  <!-- SEO / Social -->
+  <meta name="description" content="Convert PNG, JPG, WebP images instantly — 100% in your browser, fully private." />
+  <meta name="application-name" content="PixelShift" />
+
+  <!-- Apple Touch Icons -->
+  <link rel="apple-touch-icon" href="/icons/icon-152.png" />
+  <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png" />
+  <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
@@ -606,6 +630,101 @@
       .stats-strip { justify-content: center; }
       .stat-divider { display: none; }
     }
+
+    /* ─── PWA Install Banner ─── */
+    .install-banner {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120px);
+      background: var(--surface2);
+      border: 1px solid rgba(200,245,66,0.3);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 999;
+      width: calc(100% - 40px);
+      max-width: 440px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .install-banner.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: all;
+    }
+    .install-banner-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      background: rgba(200,245,66,0.08);
+      border: 1px solid rgba(200,245,66,0.2);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 1.3rem;
+    }
+    .install-banner-text { flex: 1; min-width: 0; }
+    .install-banner-text strong {
+      display: block;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .install-banner-text span {
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .btn-install {
+      background: var(--accent);
+      color: #0a0a0f;
+      border: none;
+      border-radius: 100px;
+      padding: 9px 18px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .btn-install:hover { transform: scale(1.04); }
+    .btn-install-dismiss {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--muted);
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .btn-install-dismiss:hover { color: var(--text); border-color: var(--border-bright); }
+    .offline-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: var(--danger);
+      color: #fff;
+      text-align: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 8px 16px;
+      z-index: 2000;
+      transform: translateY(-100%);
+      transition: transform 0.3s ease;
+    }
+    .offline-bar.show { transform: translateY(0); }
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      .install-banner { bottom: calc(24px + env(safe-area-inset-bottom)); }
+      .toast { bottom: calc(24px + env(safe-area-inset-bottom)); }
+    }
   </style>
 </head>
 <body>
@@ -708,10 +827,24 @@
     </footer>
   </div>
 
+  <!-- Offline bar -->
+  <div class="offline-bar" id="offlineBar">⚡ You're offline — PixelShift still works!</div>
+
   <!-- Toast -->
   <div class="toast" id="toast">
     <span id="toastIcon">✓</span>
     <span id="toastMsg">Done!</span>
+  </div>
+
+  <!-- PWA Install Banner -->
+  <div class="install-banner" id="installBanner">
+    <div class="install-banner-icon">⚡</div>
+    <div class="install-banner-text">
+      <strong>Install PixelShift</strong>
+      <span>Adaugă pe ecranul principal — funcționează offline</span>
+    </div>
+    <button class="btn-install" id="btnInstall">Install</button>
+    <button class="btn-install-dismiss" id="btnDismiss">✕</button>
   </div>
 
   <script>
@@ -998,6 +1131,102 @@
       toast.className = 'toast ' + type + ' show';
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => toast.classList.remove('show'), 3200);
+    }
+  </script>
+
+  <!-- ─── PWA: Service Worker + Install Prompt ─── -->
+  <script>
+    // ── Service Worker Registration ──
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => {
+            console.log('[PWA] SW registered, scope:', reg.scope);
+
+            // Notify user when a new version is available
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  showToast('Update available — reload to refresh ✨', 'success');
+                }
+              });
+            });
+          })
+          .catch(err => console.warn('[PWA] SW registration failed:', err));
+      });
+    }
+
+    // ── Offline / Online indicator ──
+    const offlineBar = document.getElementById('offlineBar');
+    function updateOnlineStatus() {
+      if (!navigator.onLine) {
+        offlineBar.classList.add('show');
+      } else {
+        offlineBar.classList.remove('show');
+      }
+    }
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+
+    // ── Install Prompt (Android Chrome / Edge) ──
+    let deferredPrompt = null;
+    const installBanner = document.getElementById('installBanner');
+    const btnInstall   = document.getElementById('btnInstall');
+    const btnDismiss   = document.getElementById('btnDismiss');
+
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      deferredPrompt = e;
+
+      // Don't show if user already dismissed
+      if (localStorage.getItem('pwa-dismissed')) return;
+
+      // Show banner after a short delay so it doesn't interrupt page load
+      setTimeout(() => installBanner.classList.add('show'), 2500);
+    });
+
+    btnInstall.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      installBanner.classList.remove('show');
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        showToast('PixelShift installed! 🎉', 'success');
+      }
+      deferredPrompt = null;
+    });
+
+    btnDismiss.addEventListener('click', () => {
+      installBanner.classList.remove('show');
+      localStorage.setItem('pwa-dismissed', '1');
+    });
+
+    // Hide banner once app is installed
+    window.addEventListener('appinstalled', () => {
+      installBanner.classList.remove('show');
+      deferredPrompt = null;
+      showToast('Instalat cu succes! 🎉', 'success');
+    });
+
+    // ── iOS Safari install hint ──
+    // Show instructions since iOS doesn't support beforeinstallprompt
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone;
+
+    if (isIos && !isInStandaloneMode && !localStorage.getItem('ios-hint-shown')) {
+      setTimeout(() => {
+        // Repurpose the banner for iOS
+        document.querySelector('.install-banner-text strong').textContent = 'Adaugă pe iPhone';
+        document.querySelector('.install-banner-text span').textContent =
+          'Apasă Share (□↑) → "Add to Home Screen"';
+        btnInstall.style.display = 'none';
+        installBanner.classList.add('show');
+        localStorage.setItem('ios-hint-shown', '1');
+        setTimeout(() => installBanner.classList.remove('show'), 8000);
+      }, 3000);
     }
   </script>
 </body>
